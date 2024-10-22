@@ -1,0 +1,28 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<div id="content-main">
+    <h2>Dashboard</h2>
+    <div class="module">
+        <h3>Statistics</h3>
+        <table>
+            <tr>
+                <th>Total Users</th>
+                <td>{{ total_users }}</td>
+            </tr>
+            <tr>
+                <th>Total Songs</th>
+                <td>{{ total_songs }}</td>
+            </tr>
+            <tr>
+                <th>Total Albums</th>
+                <td>{{ total_albums }}</td>
+            </tr>
+            <tr>
+                <th>Total Artists</th>
+                <td>{{ total_artists }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+{% endblock %}

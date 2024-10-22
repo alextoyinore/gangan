@@ -1,0 +1,80 @@
+html[data-theme="light"], :root {
+    --primary: #9c2cfe;
+    --secondary: #8800ff;
+    --breadcrumbs-bg: #5903a4;
+    --selected-row: #8800ff22;
+    --primary-fg: #ffffff;
+    --link-fg: #777;
+    --body-fg: #333333;
+    --body-bg: #f5f5f5;
+    --default-button-bg: #5903a4;
+    --header-bg: #5903a4;
+}
+
+html[data-theme="dark"], :root {
+    --primary: #9c2cfe;
+    --secondary: #8800ff;
+    --breadcrumbs-bg: #5903a4;
+    --selected-row: #8800ff22;
+    --primary-fg: #ffffff;
+    --link-fg: #ffffff;
+    --body-fg: #333333;
+    --body-bg: #171717;
+    --default-button-bg: #6d03c9;
+    --header-bg: #6d03c9;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+/* .button.default, input[type=submit].default, .submit-row input.default {
+    background: #6a01c6;
+} */
+
+ul.messagelist li {
+    margin: 10px 40px 10px 40px;
+}
+
+
+#header {
+    color: var(--primary-fg);
+    height: 50px;
+}
+
+.module h2, .module caption, .inline-group h2 {
+    padding: 12px;
+}
+
+a:link, a:visited {
+    color: var(--link-fg);
+}
+
+div.breadcrumbs {
+    margin-bottom: 20px;
+}
+
+#site-name a:link, #site-name a:visited {
+    font-weight: 600;
+    color: #fff;
+}
+
+#nav-sidebar {
+    border: 0;
+}
+
+table thead th .text a, td, th {
+    padding: 15px;
+    border: 0;
+}
+
+#nav-filter {
+    padding: 12px 5px;
+    margin: 10px 0;
+}
+
+.toggle-nav-sidebar {
+    border-right: 0;
+    padding: 20px;
+}
+

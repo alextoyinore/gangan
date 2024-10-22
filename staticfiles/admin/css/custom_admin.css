@@ -1,0 +1,49 @@
+:root {
+    --primary: #1a237e;
+    --secondary: #3f51b5;
+    --accent: #ff4081;
+    --primary-fg: #ffffff;
+    --body-fg: #333333;
+    --body-bg: #f5f5f5;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+}
+
+#header {
+    background: var(--primary);
+    color: var(--primary-fg);
+    box-shadow: 0 2px 4px rgba(0,0,0,.1);
+}
+
+.module h2, .module caption, .inline-group h2 {
+    background: var(--secondary);
+    color: var(--primary-fg);
+    font-weight: 500;
+}
+
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: var(--secondary);
+    color: var(--primary-fg);
+    transition: background 0.3s ease;
+}
+
+.button:hover, input[type=submit]:hover, input[type=button]:hover {
+    background: var(--primary);
+}
+
+.button.default, input[type=submit].default, .submit-row input.default {
+    background: var(--accent);
+}
+
+#changelist-filter h2 {
+    background: var(--secondary);
+    color: var(--primary-fg);
+}
+
+.global-nav-link {
+    color: var(--primary-fg) !important;
+    font-weight: bold;
+    margin-left: 20px;
+}
