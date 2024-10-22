@@ -91,8 +91,8 @@ table thead th .text a, td, th {
 }
 
 *::-webkit-scrollbar {
-    width: 5px;
-    height: 8px;
+    width: 2px;
+    height: 2px;
 }
 
 *::-webkit-scrollbar-track {
@@ -118,8 +118,8 @@ table thead th .text a, td, th {
 }
 
 #container::-webkit-scrollbar {
-    width: 5px;
-    height: 8px;
+    width: 2px;
+    height: 2px;
 }
 
 #container::-webkit-scrollbar-track {

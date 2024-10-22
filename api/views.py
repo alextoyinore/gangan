@@ -241,28 +241,48 @@ class SongRatingViewSet(viewsets.ModelViewSet):
         return SongRating.objects.filter(user=self.request.user)
     
 
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
     username_or_email = request.data.get('username_or_email')
     password = request.data.get('password')
 
-    logger.debug(f"Login attempt for user: {username_or_email}")
+    # logger.debug(f"Login attempt for user: {username_or_email}")
 
     if username_or_email is None or password is None:
         return Response({'error': 'Please provide both username/email and password'},
                         status=status.HTTP_400_BAD_REQUEST)
 
-    user = authenticate(request, username=username_or_email, password=password)
+    # Determine if the input is an email or username
+    try:
+        validate_email(username_or_email)
+        is_email = True
+    except ValidationError:
+        is_email = False
 
-    if not user:
+    # Check if the user exists
+    try:
+        if is_email:
+            user = User.objects.get(email=username_or_email)
+        else:
+            user = User.objects.get(username=username_or_email)
+    except User.DoesNotExist:
+        logger.warning(f"User not found: {username_or_email}")
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    # Authenticate the user
+    authenticated_user = authenticate(request, username=user.username, password=password)
+
+    if not authenticated_user:
         logger.warning(f"Failed login attempt for user: {username_or_email}")
-        return Response({'error': 'Invalid credentials'},
-                        status=status.HTTP_404_NOT_FOUND)
+        return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    logger.info(f"Successful login for user: {username_or_email}")
-    token, _ = Token.objects.get_or_create(user=user)
-    serializer = UserSerializer(user)
+    # logger.info(f"Successful login for user: {username_or_email}")
+    token, _ = Token.objects.get_or_create(user=authenticated_user)
+    serializer = UserSerializer(authenticated_user)
 
     return Response({
         'token': token.key,
