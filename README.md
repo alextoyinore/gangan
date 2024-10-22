@@ -1,0 +1,1 @@
+This software is the api for a music streaming platform called Gangan (Talking Drum)

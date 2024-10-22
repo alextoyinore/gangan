@@ -9,24 +9,31 @@ from .models import (
 # Register your models here.
 
 class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'username', 'firstname', 'lastname', 'is_staff', 'is_active', 'date_joined', 'last_login')
-    list_filter = ('is_staff', 'is_active', 'is_premium')
+    # The fields to be used in displaying the User model.
+    # These override the definitions on the base UserAdmin
+    # that reference specific fields on auth.User.
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff')
+    list_filter = ('is_staff', 'is_superuser', 'is_active', 'groups')
     fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal info', {'fields': ('username', 'firstname', 'lastname', 'avatar', 'bio', 'date_of_birth', 'country', 'language')}),
+        (None, {'fields': ('username', 'password')}),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email', 'bio', 'date_of_birth', 'avatar')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')}),
-        ('Important dates', {'fields': ('last_login', 'date_joined')}),
-        ('Additional info', {'fields': ('slug', 'is_premium', 'last_active')}),
+        ('Important dates', {'fields': ('last_login',)}),
+        ('Additional info', {'fields': ('language', 'country', 'is_premium')}),
     )
+    # add_fieldsets is not a standard ModelAdmin attribute. UserAdmin
+    # overrides get_fieldsets to use this attribute when creating a user.
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('email', 'username', 'password1', 'password2'),
+            'fields': ('username', 'email', 'password1', 'password2'),
         }),
     )
-    search_fields = ('email', 'username', 'firstname', 'lastname')
-    ordering = ('email',)
+    search_fields = ('username', 'first_name', 'last_name', 'email')
+    ordering = ('-date_joined',)
+    filter_horizontal = ('groups', 'user_permissions',)
 
+# Now register the new UserAdmin...
 admin.site.register(User, UserAdmin)
 
 @admin.register(Artist)
@@ -105,5 +112,3 @@ class SongRatingAdmin(admin.ModelAdmin):
     list_display = ('user', 'song', 'rating', 'created_at')
     search_fields = ('user__username', 'song__title')
     list_filter = ('rating', 'created_at')
-
-

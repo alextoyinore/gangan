@@ -31,6 +31,16 @@ from .serializers import (
     DetailedArtistSerializer, DetailedPodcastSerializer
 )
 from .permissions import IsAuthenticatedOrCreateOnly
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.utils import timezone
+from datetime import timedelta
+import logging
+
+logger = logging.getLogger(__name__)
 
 # from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 # from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -51,9 +61,15 @@ class UserViewSet(viewsets.ModelViewSet):
         user = serializer.instance
         token, created = Token.objects.get_or_create(user=user)
         return Response({
-            'token': token.key,
+            # 'token': token.key,
             'user': serializer.data
         }, status=status.HTTP_201_CREATED, headers=headers)
+    
+    def perform_create(self, serializer):
+        return serializer.save()
+    
+    def perform_update(self, serializer):
+        return serializer.save()
 
     @action(detail=True, methods=['get'])
     def playlists(self, request, pk=None):
@@ -227,95 +243,54 @@ class SongRatingViewSet(viewsets.ModelViewSet):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login_with_email(request):
-    email = request.data.get('email')
+def login(request):
+    username_or_email = request.data.get('username_or_email')
     password = request.data.get('password')
 
-    if email is None or password is None:
-        return Response({'error': 'Please provide both email and password'},
+    logger.debug(f"Login attempt for user: {username_or_email}")
+
+    if username_or_email is None or password is None:
+        return Response({'error': 'Please provide both username/email and password'},
                         status=status.HTTP_400_BAD_REQUEST)
 
+    user = authenticate(request, username=username_or_email, password=password)
+
+    if not user:
+        logger.warning(f"Failed login attempt for user: {username_or_email}")
+        return Response({'error': 'Invalid credentials'},
+                        status=status.HTTP_404_NOT_FOUND)
+
+    logger.info(f"Successful login for user: {username_or_email}")
+    token, _ = Token.objects.get_or_create(user=user)
+    serializer = UserSerializer(user)
+
+    return Response({
+        'token': token.key,
+        'user': serializer.data
+    }, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_token(request):
+    user = request.user
     try:
-        user = User.objects.get(email=email)
-    except ObjectDoesNotExist:
-        return Response({'error': 'Invalid email or password'},
-                        status=status.HTTP_404_NOT_FOUND)
-
-    user = authenticate(username=user.username, password=password)
-
-    if not user:
-        return Response({'error': 'Invalid email or password'},
-                        status=status.HTTP_404_NOT_FOUND)
-
-    token, _ = Token.objects.get_or_create(user=user)
-    serializer = UserSerializer(user)
-
+        token = Token.objects.get(user=user)
+        # Check if token is expired (assuming a 30-day expiry)
+        is_expired = token.created < timezone.now() - timedelta(days=30)
+        if is_expired:
+            # Delete the old token
+            token.delete()
+            # Create a new token
+            token = Token.objects.create(user=user)
+    except Token.DoesNotExist:
+        # If token doesn't exist, create a new one
+        token = Token.objects.create(user=user)
+    
     return Response({
         'token': token.key,
-        'user': serializer.data
-    }, status=status.HTTP_200_OK)
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def login_with_username(request):
-    username = request.data.get('username')
-    password = request.data.get('password')
-
-    if username is None or password is None:
-        return Response({'error': 'Please provide both username and password'},
-                        status=status.HTTP_400_BAD_REQUEST)
-
-    user = authenticate(username=username, password=password)
-
-    if not user:
-        return Response({'error': 'Invalid username or password'},
-                        status=status.HTTP_404_NOT_FOUND)
-
-    token, _ = Token.objects.get_or_create(user=user)
-    serializer = UserSerializer(user)
-
-    return Response({
-        'token': token.key,
-        'user': serializer.data
-    }, status=status.HTTP_200_OK)
+        'user_id': user.id,
+        'email': user.email
+    })
 
 
-# class GoogleLogin(SocialLoginView):
-#     adapter_class = GoogleOAuth2Adapter
-#     client_class = OAuth2Client
-
-# @api_view(['POST'])
-# @permission_classes([AllowAny])
-# def google_auth(request):
-#     code = request.data.get('code', None)
-#     if code is None:
-#         return Response({'error': 'Code not provided'}, status=400)
-
-#     try:
-#         # Use the GoogleOAuth2Adapter to validate the code
-#         adapter = GoogleOAuth2Adapter(request)
-#         app = adapter.get_provider().app
-#         token = adapter.get_provider().get_app(request).client.get_access_token(code)
-        
-#         # Get or create the social account
-#         social_account = adapter.complete_login(request, app, token)
-#         social_account.save()
-
-#         # Get or create the user account
-#         user = social_account.user
-#         if not user.is_active:
-#             return Response({'error': 'User account is disabled'}, status=400)
-
-#         # Get or create the auth token
-#         token, _ = Token.objects.get_or_create(user=user)
-
-#         # Log the user in
-#         login(request, user)
-
-#         return Response({
-#             'token': token.key,
-#             'user_id': user.pk,
-#             'email': user.email
-#         })
-#     except Exception as e:
-#         return Response({'error': str(e)}, status=400)

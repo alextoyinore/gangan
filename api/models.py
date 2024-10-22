@@ -1,13 +1,14 @@
 from django.db import models
 from helpers.lists import countries, ethnicities, languages
 from django.contrib.auth.base_user import BaseUserManager
-from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, AbstractUser
 from django.utils import timezone
 from django.core.validators import RegexValidator, MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import random
 import string
+
 
 # Create your models here.
 
@@ -47,7 +48,7 @@ class CustomUserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(max_length=250, unique=True)
+    email = models.EmailField(unique=True)
     username = models.CharField(
         max_length=250, 
         unique=True,
@@ -60,10 +61,11 @@ class User(AbstractBaseUser, PermissionsMixin):
             validate_username
         ]
     )
-    firstname = models.CharField(max_length=250, null=True, blank=True)
-    lastname = models.CharField(max_length=250, null=True, blank=True)
-    nationality = models.CharField(choices=countries, max_length=200)
+    first_name = models.CharField(max_length=250, null=True, blank=True)
+    last_name = models.CharField(max_length=250, null=True, blank=True)
+    country = models.CharField(choices=countries, max_length=200, null=True)
     ethnicity = models.CharField(choices=ethnicities, max_length=200)
+    language = models.CharField(max_length=2, choices=languages, default='en', null=True, blank=True)
     date_joined = models.DateTimeField(auto_now_add=True)
     last_login = models.DateTimeField(default=timezone.now)
     is_active = models.BooleanField(default=True)
@@ -72,8 +74,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     avatar = models.ImageField(upload_to='user_avatars/', null=True, blank=True)
     bio = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
-    country = models.CharField(max_length=100, blank=True, null=True)
-    language = models.CharField(max_length=2, choices=languages, default='en', null=True, blank=True)
     is_premium = models.BooleanField(default=False, null=True)
     last_active = models.DateTimeField(null=True, blank=True)
 
@@ -88,13 +88,13 @@ class User(AbstractBaseUser, PermissionsMixin):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return self.email
+        return self.username
 
     def get_full_name(self):
-        return f'{self.firstname} {self.lastname}'.strip() or self.username
+        return f'{self.first_name} {self.last_name}'.strip() or self.username
 
     def get_short_name(self):
-        return self.firstname or self.username
+        return self.first_name or self.username
 
     def clean(self):
         super().clean()
@@ -108,7 +108,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Artist(models.Model):
     account = models.OneToOneField(User, on_delete=models.CASCADE, related_name='artist_profile', null=True)
     stage_name = models.CharField(max_length=200, unique=True)
-    dob = models.DateField(null=True, blank=True)
     bio = models.TextField(blank=True, null=True)
     genres = models.ManyToManyField('Genre', related_name='artists', blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
