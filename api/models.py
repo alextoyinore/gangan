@@ -29,19 +29,23 @@ def generate_unique_slug():
 
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, username, password=None, **extra_fields):
+
         if not email:
             raise ValueError('The Email field must be set')
-        email = self.normalize_email(email)
+        email = self.normalize_email(email).lower()
+        username = username.lower()
         user = self.model(email=email, username=username, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
+
 
     def create_superuser(self, email, username, password=None, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         extra_fields.setdefault('is_active', True)
         return self.create_user(email, username, password, **extra_fields)
+
 
     def get_by_natural_key(self, email):
         return self.get(email=email)
@@ -55,27 +59,19 @@ class User(AbstractUser):
         validators=[
             RegexValidator(
                 regex='^[a-zA-Z0-9_-]+$',
-                message='Username can only contain alphanumeric characters, underscores, and hyphens.',
                 code='invalid_username'
             ),
             validate_username
         ]
     )
-    first_name = models.CharField(max_length=250, null=True, blank=True)
-    last_name = models.CharField(max_length=250, null=True, blank=True)
     country = models.CharField(choices=countries, max_length=200, null=True)
-    ethnicity = models.CharField(choices=ethnicities, max_length=200)
+    ethnicity = models.CharField(choices=ethnicities, max_length=200, null=True)
     language = models.CharField(max_length=2, choices=languages, default='en', null=True, blank=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-    last_login = models.DateTimeField(default=timezone.now)
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
     slug = models.SlugField(max_length=8, unique=True, blank=True)
     avatar = models.ImageField(upload_to='user_avatars/', null=True, blank=True)
     bio = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     is_premium = models.BooleanField(default=False, null=True)
-    last_active = models.DateTimeField(null=True, blank=True)
 
     objects = CustomUserManager()
 
@@ -107,7 +103,7 @@ class User(AbstractUser):
 
 class Artist(models.Model):
     account = models.OneToOneField(User, on_delete=models.CASCADE, related_name='artist_profile', null=True)
-    stage_name = models.CharField(max_length=200, unique=True)
+    stage_name = models.CharField(max_length=200)
     bio = models.TextField(blank=True, null=True)
     genres = models.ManyToManyField('Genre', related_name='artists', blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
@@ -207,14 +203,13 @@ class UserActivity(models.Model):
 
 
 class Subscription(models.Model):
-    SUBSCRIPTION_TYPES = [
-        ('FREE', 'Free'),
-        ('PREMIUM', 'Premium'),
-        ('FAMILY', 'Family'),
+    Subscription_Types = [
+        ('free', 'free'),
+        ('premium', 'premium'),
+        ('family', 'family'),
     ]
-
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
-    subscription_type = models.CharField(max_length=10, choices=SUBSCRIPTION_TYPES, default='FREE')
+    subscription_type = models.CharField(max_length=10, choices=Subscription_Types, default='Free')
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
@@ -298,7 +293,5 @@ class SongRating(models.Model):
 
     def __str__(self):
         return f'{self.user.username} rated {self.song.title}: {self.rating}'
-
-
 
 

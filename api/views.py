@@ -47,29 +47,41 @@ logger = logging.getLogger(__name__)
 # from dj_rest_auth.registration.views import SocialLoginView
 
 
-
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticatedOrCreateOnly]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        user = serializer.instance
-        token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            # 'token': token.key,
-            'user': serializer.data
-        }, status=status.HTTP_201_CREATED, headers=headers)
+    # def create(self, request, *args, **kwargs):
+    #     serializer = self.get_serializer(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     self.perform_create(serializer)
+    #     headers = self.get_success_headers(serializer.data)
+    #     user = serializer.instance
+    #     # token, created = Token.objects.get_or_create(user=user)
+    #     return Response({
+    #         # 'token': token.key,
+    #         'user': serializer.data
+    #     }, status=status.HTTP_201_CREATED, headers=headers)
     
-    def perform_create(self, serializer):
-        return serializer.save()
+
+    # def perform_create(self, serializer):
+    #     return serializer.save()
     
-    def perform_update(self, serializer):
-        return serializer.save()
+    # def perform_update(self, serializer):
+    #     return serializer.save()
+
+    def get_queryset(self):
+        if not self.request.user.is_staff:
+            return User.objects.filter(is_staff=False)
+        return User.objects.all()
+
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_staff and not request.user.is_staff:
+            return Response({'error':'You do not have permission to perform this action'}, status=status.HTTP_401_UNAUTHORIZED)
+        return super().retrieve(request, *args, **kwargs)
 
     @action(detail=True, methods=['get'])
     def playlists(self, request, pk=None):
@@ -84,6 +96,7 @@ class UserViewSet(viewsets.ModelViewSet):
         activities = UserActivity.objects.filter(user=user)
         serializer = UserActivitySerializer(activities, many=True)
         return Response(serializer.data)
+
 
 class ArtistViewSet(viewsets.ModelViewSet):
     queryset = Artist.objects.all()
@@ -103,6 +116,7 @@ class ArtistViewSet(viewsets.ModelViewSet):
         serializer = SongSerializer(songs, many=True)
         return Response(serializer.data)
 
+
 class AlbumViewSet(viewsets.ModelViewSet):
     queryset = Album.objects.all()
     serializer_class = AlbumSerializer
@@ -118,6 +132,7 @@ class AlbumViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = DetailedAlbumSerializer(instance)
         return Response(serializer.data)
+
 
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
@@ -135,6 +150,7 @@ class SongViewSet(viewsets.ModelViewSet):
         )
         serializer = SongRatingSerializer(rating_obj)
         return Response(serializer.data)
+
 
 class PlaylistViewSet(viewsets.ModelViewSet):
     queryset = Playlist.objects.all()
@@ -158,9 +174,11 @@ class PlaylistViewSet(viewsets.ModelViewSet):
         serializer = PlaylistSongSerializer(playlist_song)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+
 
 class UserActivityViewSet(viewsets.ModelViewSet):
     queryset = UserActivity.objects.all()
@@ -170,6 +188,7 @@ class UserActivityViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return UserActivity.objects.filter(user=self.request.user)
 
+
 class SubscriptionViewSet(viewsets.ModelViewSet):
     queryset = Subscription.objects.all()
     serializer_class = SubscriptionSerializer
@@ -177,6 +196,7 @@ class SubscriptionViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
+
 
 class UserPreferencesViewSet(viewsets.ModelViewSet):
     queryset = UserPreferences.objects.all()
@@ -186,9 +206,11 @@ class UserPreferencesViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return UserPreferences.objects.filter(user=self.request.user)
 
+
 class RadioViewSet(viewsets.ModelViewSet):
     queryset = Radio.objects.all()
     serializer_class = RadioSerializer
+
 
 class PodcastViewSet(viewsets.ModelViewSet):
     queryset = Podcast.objects.all()
@@ -199,9 +221,11 @@ class PodcastViewSet(viewsets.ModelViewSet):
         serializer = DetailedPodcastSerializer(instance)
         return Response(serializer.data)
 
+
 class PodcastEpisodeViewSet(viewsets.ModelViewSet):
     queryset = PodcastEpisode.objects.all()
     serializer_class = PodcastEpisodeSerializer
+
 
 class UserFollowingViewSet(viewsets.ModelViewSet):
     queryset = UserFollowing.objects.all()
@@ -232,6 +256,7 @@ class UserFollowingViewSet(viewsets.ModelViewSet):
         following.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
+
 class SongRatingViewSet(viewsets.ModelViewSet):
     queryset = SongRating.objects.all()
     serializer_class = SongRatingSerializer
@@ -244,17 +269,15 @@ class SongRatingViewSet(viewsets.ModelViewSet):
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
+
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request):
     username_or_email = request.data.get('username_or_email')
     password = request.data.get('password')
 
-    # logger.debug(f"Login attempt for user: {username_or_email}")
-
     if username_or_email is None or password is None:
-        return Response({'error': 'Please provide both username/email and password'},
-                        status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Please provide both username/email and password'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Determine if the input is an email or username
     try:
@@ -270,47 +293,34 @@ def login(request):
         else:
             user = User.objects.get(username=username_or_email)
     except User.DoesNotExist:
-        logger.warning(f"User not found: {username_or_email}")
         return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
 
     # Authenticate the user
     authenticated_user = authenticate(request, username=user.username, password=password)
 
     if not authenticated_user:
-        logger.warning(f"Failed login attempt for user: {username_or_email}")
-        return Response({'error': 'Invalid password'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    # logger.info(f"Successful login for user: {username_or_email}")
     token, _ = Token.objects.get_or_create(user=authenticated_user)
     serializer = UserSerializer(authenticated_user)
 
     return Response({
         'token': token.key,
-        'user': serializer.data
+        # 'user': serializer.data
     }, status=status.HTTP_200_OK)
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def get_user_token(request):
-    user = request.user
-    try:
-        token = Token.objects.get(user=user)
-        # Check if token is expired (assuming a 30-day expiry)
-        is_expired = token.created < timezone.now() - timedelta(days=30)
-        if is_expired:
-            # Delete the old token
-            token.delete()
-            # Create a new token
-            token = Token.objects.create(user=user)
-    except Token.DoesNotExist:
-        # If token doesn't exist, create a new one
-        token = Token.objects.create(user=user)
-    
-    return Response({
-        'token': token.key,
-        'user_id': user.id,
-        'email': user.email
-    })
+def get_profile(request):
+    serializer = UserSerializer(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['DELETE'])
+@permission_classes(['IsAuthenticated'])
+def logout(request):
+    Token.objects.get(user=request.user).delete()
+    return Response({'message':'Logged out successfully'}, status=status.HTTP_200_OK)
 
 

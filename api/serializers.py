@@ -10,27 +10,45 @@ from rest_framework.authtoken.models import Token
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, required=False)
+    # token = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ('id', 'email', 'username', 'first_name', 'last_name', 'date_joined', 'last_login', 'is_active', 'slug', 'avatar', 'bio', 'date_of_birth', 'country', 'language', 'is_premium', 'last_active', 'password')
+        fields = '__all__'
         extra_kwargs = {'password': {'write_only': True}}
         read_only_fields = ['slug', 'date_joined', 'last_login', 'last_active']
     
     def get_token(self, obj):
-        token, created = Token.objects.get_or_create(user=obj)
+        token, _ = Token.objects.get_or_create(user=obj)
         return token.key
 
+
     def create(self, validated_data):
-        user = User.objects.create_user(**validated_data)
+        groups = validated_data.pop('groups', [])
+        user = User(
+            email=validated_data['email'].lower(),
+            username=validated_data['username'].lower(),
+            first_name=validated_data.get('first_name', ''),
+            last_name=validated_data.get('last_name', ''),
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        
+        # Handle many-to-many relationships
+        if groups:
+            user.groups.set(groups)  # Use set() to assign many-to-many relationships
         return user
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
         if password:
             instance.set_password(password)
-        return super(UserSerializer, self).update(instance, validated_data)
+        groups = validated_data.pop('groups', None)
 
+        if groups is not None:
+            instance.groups.set(groups)  # Update many-to-many relationships
+        return super(UserSerializer, self).update(instance, validated_data)
+    
 
 class ArtistSerializer(serializers.ModelSerializer):
     class Meta:
@@ -140,3 +158,5 @@ class DetailedArtistSerializer(ArtistSerializer):
 
 class DetailedPodcastSerializer(PodcastSerializer):
     episodes = PodcastEpisodeSerializer(many=True, read_only=True)
+
+

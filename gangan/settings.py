@@ -19,7 +19,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 sys.setrecursionlimit(10000)  # Increase this value carefully
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
@@ -60,7 +59,7 @@ REST_FRAMEWORK = {
         'rest_framework.authentication.SessionAuthentication',
     ],
 
-    'DEFAULT_PAGINATION_CLASS': 'helpers.pagination.TestResultsSetPagination',
+    'DEFAULT_PAGINATION_CLASS': 'api.pagination.TestResultsSetPagination',
 
     'DEFAULT_THROTTLE_CLASSES': [
         'api.throttles.BurstRateThrottle',
@@ -75,6 +74,11 @@ REST_FRAMEWORK = {
 
 AUTH_USER_MODEL = 'api.User'
 
+AUTHENTICATION_BACKENDS = [
+    'api.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+    # 'allauth.account.auth_backends.AuthenticationBackend',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -87,11 +91,6 @@ MIDDLEWARE = [
     'api.middleware.APIRateLimitMiddleware',
 ]
 
-AUTHENTICATION_BACKENDS = [
-    'api.backends.EmailOrUsernameModelBackend',
-    'django.contrib.auth.backends.ModelBackend',
-    # 'allauth.account.auth_backends.AuthenticationBackend',
-]
 
 # SITE_ID = 1
 # # Provider specific settings
@@ -175,7 +174,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/

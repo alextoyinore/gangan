@@ -67,7 +67,7 @@ from .views import (
     RadioViewSet, PodcastViewSet, PodcastEpisodeViewSet, UserFollowingViewSet,
     SongRatingViewSet
 )
-from .views import login, get_user_token
+from .views import login, get_profile
 
 
 # Create a router and register our viewsets with it.
@@ -117,20 +117,14 @@ urlpatterns += [
 ]
 
 # Logins
-
-# urlpatterns += [
-#     path('login/email/', login_with_email, name='login_with_email'),
-#     path('login/username/', login_with_username, name='login_with_username'),
-# ]
+urlpatterns += [
+    path('login/', login, name='login'),
+    path('me/', get_profile, name='me'),
+]
 
 # urlpatterns += [
 #     path('auth/google/', google_auth, name='google_auth'),
 # ]
 
-urlpatterns += [
-    path('token/', get_user_token, name='get_user_token'),
-]
 
-urlpatterns += [
-    path('login/', login, name='login'),
-]
+
