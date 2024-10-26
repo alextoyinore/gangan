@@ -16,7 +16,7 @@ from django.contrib.auth import authenticate
 from django.core.exceptions import ObjectDoesNotExist
 from .models import User
 from .serializers import UserSerializer
-from django.contrib.auth import login
+from django.contrib.auth import login, logout
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -50,6 +50,7 @@ logger = logging.getLogger(__name__)
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    lookup_field = 'slug'
     permission_classes = [IsAuthenticatedOrCreateOnly]
 
     def create(self, request, *args, **kwargs):
@@ -100,16 +101,17 @@ class UserViewSet(viewsets.ModelViewSet):
 class ArtistViewSet(viewsets.ModelViewSet):
     queryset = Artist.objects.all()
     serializer_class = ArtistSerializer
+    lookup_field = 'slug'
 
     @action(detail=True, methods=['get'])
-    def albums(self, request, pk=None):
+    def albums(self, request, slug=None):
         artist = self.get_object()
         albums = Album.objects.filter(artist=artist)
         serializer = AlbumSerializer(albums, many=True)
         return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
-    def songs(self, request, pk=None):
+    def songs(self, request, slug=None):
         artist = self.get_object()
         songs = Song.objects.filter(artist=artist)
         serializer = SongSerializer(songs, many=True)
@@ -119,9 +121,10 @@ class ArtistViewSet(viewsets.ModelViewSet):
 class AlbumViewSet(viewsets.ModelViewSet):
     queryset = Album.objects.all()
     serializer_class = AlbumSerializer
+    lookup_field = 'slug'
 
     @action(detail=True, methods=['get'])
-    def songs(self, request, pk=None):
+    def songs(self, request, slug=None):
         album = self.get_object()
         songs = Song.objects.filter(album=album)
         serializer = SongSerializer(songs, many=True)
@@ -136,9 +139,10 @@ class AlbumViewSet(viewsets.ModelViewSet):
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
+    lookup_field = 'slug'
 
     @action(detail=True, methods=['post'])
-    def rate(self, request, pk=None):
+    def rate(self, request, slug=None):
         song = self.get_object()
         user = request.user
         rating = request.data.get('rating')
@@ -154,6 +158,7 @@ class SongViewSet(viewsets.ModelViewSet):
 class PlaylistViewSet(viewsets.ModelViewSet):
     queryset = Playlist.objects.all()
     serializer_class = PlaylistSerializer
+    lookup_field = 'slug'
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -161,7 +166,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
         return Response(serializer.data)
 
     @action(detail=True, methods=['post'])
-    def add_song(self, request, pk=None):
+    def add_song(self, request, slug=None):
         playlist = self.get_object()
         song_id = request.data.get('song_id')
         if song_id is None:
@@ -177,6 +182,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
 class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
+    lookup_field = 'slug'
 
 
 class UserActivityViewSet(viewsets.ModelViewSet):
@@ -209,11 +215,13 @@ class UserPreferencesViewSet(viewsets.ModelViewSet):
 class RadioViewSet(viewsets.ModelViewSet):
     queryset = Radio.objects.all()
     serializer_class = RadioSerializer
+    lookup_field = 'slug'
 
 
 class PodcastViewSet(viewsets.ModelViewSet):
     queryset = Podcast.objects.all()
     serializer_class = PodcastSerializer
+    lookup_field = 'slug'
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -224,6 +232,7 @@ class PodcastViewSet(viewsets.ModelViewSet):
 class PodcastEpisodeViewSet(viewsets.ModelViewSet):
     queryset = PodcastEpisode.objects.all()
     serializer_class = PodcastEpisodeSerializer
+    lookup_field = 'slug'
 
 
 class UserFollowingViewSet(viewsets.ModelViewSet):
@@ -316,21 +325,9 @@ def get_profile(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['POST'])
+@api_view(['DELETE'])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    """
-    Log out the user by deleting their authentication token.
-    """
-    try:
-        # Attempt to retrieve and delete the user's token
-        token = Token.objects.get(user=request.user)
-        token.delete()
-        return Response({'message': 'Successfully logged out.'}, status=status.HTTP_200_OK)
-    except Token.DoesNotExist:
-        return Response({'error': 'Token not found. You may already be logged out.'}, status=status.HTTP_400_BAD_REQUEST)
-    except Exception as e:
-        # Handle any other exceptions that may occur
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    pass
+    # logout(request.user)
 

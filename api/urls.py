@@ -5,15 +5,15 @@ URL: /api/modelname/
 
 Retrieve (single instance):
 HTTP Method: GET
-URL: /api/modelname/{id}/
+URL: /api/modelname/{slug}/
 
 Update:
 HTTP Method: PUT (full update) or PATCH (partial update)
-URL: /api/modelname/{id}/
+URL: /api/modelname/{slug}/
 
 4. Delete:
 HTTP Method: DELETE
-URL: /api/modelname/{id}/
+URL: /api/modelname/{slug}/
 
 List (multiple instances):
 HTTP Method: GET
@@ -23,37 +23,37 @@ Here's a breakdown for each model:
 
 1. Users:
 Create: POST to /api/users/
-Retrieve: GET to /api/users/{id}/
-Update: PUT/PATCH to /api/users/{id}/
-Delete: DELETE to /api/users/{id}/
+Retrieve: GET to /api/users/{slug}/
+Update: PUT/PATCH to /api/users/{slug}/
+Delete: DELETE to /api/users/{slug}/
 List: GET to /api/users/
 
 Artists:
 Create: POST to /api/artists/
-Retrieve: GET to /api/artists/{id}/
-Update: PUT/PATCH to /api/artists/{id}/
-Delete: DELETE to /api/artists/{id}/
+Retrieve: GET to /api/artists/{slug}/
+Update: PUT/PATCH to /api/artists/{slug}/
+Delete: DELETE to /api/artists/{slug}/
 List: GET to /api/artists/
 
 Albums:
 Create: POST to /api/albums/
-Retrieve: GET to /api/albums/{id}/
-Update: PUT/PATCH to /api/albums/{id}/
-Delete: DELETE to /api/albums/{id}/
+Retrieve: GET to /api/albums/{slug}/
+Update: PUT/PATCH to /api/albums/{slug}/
+Delete: DELETE to /api/albums/{slug}/
 List: GET to /api/albums/
 
 Songs:
 Create: POST to /api/songs/
-Retrieve: GET to /api/songs/{id}/
-Update: PUT/PATCH to /api/songs/{id}/
-Delete: DELETE to /api/songs/{id}/
+Retrieve: GET to /api/songs/{slug}/
+Update: PUT/PATCH to /api/songs/{slug}/
+Delete: DELETE to /api/songs/{slug}/
 List: GET to /api/songs/
 
 Playlists:
 Create: POST to /api/playlists/
-Retrieve: GET to /api/playlists/{id}/
-Update: PUT/PATCH to /api/playlists/{id}/
-Delete: DELETE to /api/playlists/{id}/
+Retrieve: GET to /api/playlists/{slug}/
+Update: PUT/PATCH to /api/playlists/{slug}/
+Delete: DELETE to /api/playlists/{slug}/
 List: GET to /api/playlists/
 
 '''
@@ -95,21 +95,21 @@ urlpatterns = [
 # Custom action URL patterns
 urlpatterns += [
     # User-related custom actions
-    path('users/<int:pk>/playlists/', UserViewSet.as_view({'get': 'playlists'}), name='user-playlists'),
-    path('users/<int:pk>/activity/', UserViewSet.as_view({'get': 'activity'}), name='user-activity'),
+    path('users/<slug:slug>/playlists/', UserViewSet.as_view({'get': 'playlists'}), name='user-playlists'),
+    path('users/<slug:slug>/activity/', UserViewSet.as_view({'get': 'activity'}), name='user-activity'),
     
     # Artist-related custom actions
-    path('artists/<int:pk>/albums/', ArtistViewSet.as_view({'get': 'albums'}), name='artist-albums'),
-    path('artists/<int:pk>/songs/', ArtistViewSet.as_view({'get': 'songs'}), name='artist-songs'),
+    path('artists/<slug:slug>/albums/', ArtistViewSet.as_view({'get': 'albums'}), name='artist-albums'),
+    path('artists/<slug:slug>/songs/', ArtistViewSet.as_view({'get': 'songs'}), name='artist-songs'),
     
     # Album-related custom actions
-    path('albums/<int:pk>/songs/', AlbumViewSet.as_view({'get': 'songs'}), name='album-songs'),
+    path('albums/<slug:slug>/songs/', AlbumViewSet.as_view({'get': 'songs'}), name='album-songs'),
     
     # Song-related custom actions
-    path('songs/<int:pk>/rate/', SongViewSet.as_view({'post': 'rate'}), name='song-rate'),
+    path('songs/<slug:slug>/rate/', SongViewSet.as_view({'post': 'rate'}), name='song-rate'),
     
     # Playlist-related custom actions
-    path('playlists/<int:pk>/add-song/', PlaylistViewSet.as_view({'post': 'add_song'}), name='playlist-add-song'),
+    path('playlists/<slug:slug>/add-song/', PlaylistViewSet.as_view({'post': 'add_song'}), name='playlist-add-song'),
     
     # UserFollowing-related custom actions
     path('user-following/follow/', UserFollowingViewSet.as_view({'post': 'follow'}), name='user-follow'),

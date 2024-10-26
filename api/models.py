@@ -9,6 +9,7 @@ from django.utils.translation import gettext_lazy as _
 import random
 import string
 from rest_framework.authtoken.models import Token
+from django.utils.text import slugify
 
 
 
@@ -21,11 +22,11 @@ def validate_username(value):
             code='invalid_username'
         )
 
-def generate_unique_slug():
+def generate_unique_slug(model):
     characters = string.ascii_letters + string.digits
     while True:
         slug = ''.join(random.choice(characters) for _ in range(8))
-        if not User.objects.filter(slug=slug).exists():
+        if not model.objects.filter(slug=slug).exists():
             return slug
 
 
@@ -82,7 +83,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if not self.slug:
-            self.slug = generate_unique_slug()
+            self.slug = generate_unique_slug(User)
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -113,6 +114,11 @@ class Artist(models.Model):
     verified = models.BooleanField(default=False, null=True)
     social_links = models.JSONField(default=dict, null=True, blank=True)  # Store social media links
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Artist)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return self.stage_name
 
@@ -128,6 +134,11 @@ class Playlist(models.Model):
     description = models.TextField(blank=True, null=True)
     cover_image = models.ImageField(upload_to='playlist_covers/', null=True, blank=True)
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Playlist)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.user.username} - {self.name}'
 
@@ -142,6 +153,11 @@ class Album(models.Model):
     slug = models.SlugField(unique=True, null=True, blank=True)
     is_single = models.BooleanField(default=False, null=True)
     record_label = models.CharField(max_length=200, blank=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Album)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return f'{self.artist.stage_name} - {self.title}'
@@ -163,6 +179,11 @@ class Song(models.Model):
     explicit = models.BooleanField(default=False, null=True)
     waveform_data = models.JSONField(null=True, blank=True)  # Store waveform data for visualization
 
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Song)
+        super().save(*args, **kwargs)
+
     def __str__(self):
         return f'{self.artist.stage_name} - {self.title}'
 
@@ -179,7 +200,12 @@ class PlaylistSong(models.Model):
 
 class Genre(models.Model):
     name = models.CharField(max_length=100, unique=True)
-    slug = models.SlugField(unique=True)
+    slug = models.SlugField(unique=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Genre)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -241,6 +267,12 @@ class Radio(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.SET_NULL, null=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(unique=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Radio)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
@@ -255,6 +287,12 @@ class Podcast(models.Model):
     genres = models.ManyToManyField(Genre, related_name='podcasts')
     language = models.CharField(max_length=10, choices=languages)
     is_explicit = models.BooleanField(default=False)
+    slug = models.SlugField(unique=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Podcast)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.title
@@ -267,6 +305,12 @@ class PodcastEpisode(models.Model):
     audio_file = models.FileField(upload_to='podcast_episodes/')
     duration = models.DurationField()
     release_date = models.DateTimeField()
+    slug = models.SlugField(unique=True, null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(PodcastEpisode)
+        super().save(*args, **kwargs)
     
     def __str__(self):
         return f'{self.podcast.title} - {self.title}'
