@@ -8,6 +8,8 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import gettext_lazy as _
 import random
 import string
+from rest_framework.authtoken.models import Token
+
 
 
 # Create your models here.
@@ -204,9 +206,9 @@ class UserActivity(models.Model):
 
 class Subscription(models.Model):
     Subscription_Types = [
-        ('free', 'free'),
-        ('premium', 'premium'),
-        ('family', 'family'),
+        ('free', 'Free'),
+        ('premium', 'Premium'),
+        ('family', 'Family'),
     ]
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
     subscription_type = models.CharField(max_length=10, choices=Subscription_Types, default='Free')
@@ -251,7 +253,7 @@ class Podcast(models.Model):
     cover_image = models.ImageField(upload_to='podcast_covers/', null=True, blank=True)
     rss_feed = models.URLField(unique=True)
     genres = models.ManyToManyField(Genre, related_name='podcasts')
-    language = models.CharField(max_length=10)
+    language = models.CharField(max_length=10, choices=languages)
     is_explicit = models.BooleanField(default=False)
 
     def __str__(self):
@@ -285,7 +287,9 @@ class UserFollowing(models.Model):
 class SongRating(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='ratings')
-    rating = models.PositiveSmallIntegerField(null=True, blank=True)
+    rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[
+        (1,1), (2,2), (3,3), (4,4), (5,5)
+    ])
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

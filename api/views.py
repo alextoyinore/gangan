@@ -52,30 +52,29 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticatedOrCreateOnly]
 
-    # def create(self, request, *args, **kwargs):
-    #     serializer = self.get_serializer(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     self.perform_create(serializer)
-    #     headers = self.get_success_headers(serializer.data)
-    #     user = serializer.instance
-    #     # token, created = Token.objects.get_or_create(user=user)
-    #     return Response({
-    #         # 'token': token.key,
-    #         'user': serializer.data
-    #     }, status=status.HTTP_201_CREATED, headers=headers)
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+        user = serializer.instance
+        # token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            # 'token': token.key,
+            'user': serializer.data
+        }, status=status.HTTP_201_CREATED, headers=headers)
     
 
-    # def perform_create(self, serializer):
-    #     return serializer.save()
+    def perform_create(self, serializer):
+        return serializer.save()
     
-    # def perform_update(self, serializer):
-    #     return serializer.save()
+    def perform_update(self, serializer):
+        return serializer.save()
 
     def get_queryset(self):
         if not self.request.user.is_staff:
             return User.objects.filter(is_staff=False)
         return User.objects.all()
-
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -317,10 +316,21 @@ def get_profile(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['DELETE'])
-@permission_classes(['IsAuthenticated'])
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def logout(request):
-    Token.objects.get(user=request.user).delete()
-    return Response({'message':'Logged out successfully'}, status=status.HTTP_200_OK)
+    """
+    Log out the user by deleting their authentication token.
+    """
+    try:
+        # Attempt to retrieve and delete the user's token
+        token = Token.objects.get(user=request.user)
+        token.delete()
+        return Response({'message': 'Successfully logged out.'}, status=status.HTTP_200_OK)
+    except Token.DoesNotExist:
+        return Response({'error': 'Token not found. You may already be logged out.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        # Handle any other exceptions that may occur
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
