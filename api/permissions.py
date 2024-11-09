@@ -19,4 +19,28 @@ class IsAuthenticatedOrCreateOnly(permissions.BasePermission):
         #     return False
         # For all other actions, only allow authenticated users
         return request.user and request.user.is_authenticated
+    
+    def has_object_permission(self, request, view, obj):
+        # Check if the user is the owner of the account
+        if view.action == 'destroy':
+            return obj == request.user
+        # For all other actions, only allow authenticated users
+        return request.user and request.user.is_authenticated
+
+
+class IsAuthenticatedAndOwnerOnDelete(permissions.BasePermission):
+    """
+    Custom permission to only allow creating new users if not authenticated.
+    For all other operations, user must be authenticated.
+    """
+
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+    
+    def has_object_permission(self, request, view, obj):
+        # Check if the user is the owner of the account
+        if view.action == 'destroy':
+            return obj == request.user
+        # For all other actions, only allow authenticated users
+        return request.user and request.user.is_authenticated
 

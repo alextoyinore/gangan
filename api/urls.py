@@ -65,9 +65,9 @@ from .views import (
     UserViewSet, ArtistViewSet, AlbumViewSet, SongViewSet, PlaylistViewSet,
     GenreViewSet, UserActivityViewSet, SubscriptionViewSet, UserPreferencesViewSet,
     RadioViewSet, PodcastViewSet, PodcastEpisodeViewSet, UserFollowingViewSet,
-    SongRatingViewSet
+    SongRatingViewSet, LibraryViewSet, FavouriteViewSet
 )
-from .views import login, get_profile
+from .views import login, get_profile, logout
 
 
 # Create a router and register our viewsets with it.
@@ -86,6 +86,8 @@ router.register(r'podcasts', PodcastViewSet)
 router.register(r'podcast-episodes', PodcastEpisodeViewSet)
 router.register(r'user-following', UserFollowingViewSet)
 router.register(r'song-ratings', SongRatingViewSet)
+router.register(r'library', LibraryViewSet)
+router.register(r'favourites', FavouriteViewSet)
 
 # The API URLs are now determined automatically by the router.
 urlpatterns = [
@@ -96,6 +98,8 @@ urlpatterns = [
 urlpatterns += [
     # User-related custom actions
     path('users/<slug:slug>/playlists/', UserViewSet.as_view({'get': 'playlists'}), name='user-playlists'),
+    path('users/<slug:slug>/favourites/', UserViewSet.as_view({'get': 'favourites'}), name='user-favourites'),
+    path('users/<slug:slug>/library/', UserViewSet.as_view({'get': 'library'}), name='user-library'),
     path('users/<slug:slug>/activity/', UserViewSet.as_view({'get': 'activity'}), name='user-activity'),
     
     # Artist-related custom actions
@@ -120,6 +124,7 @@ urlpatterns += [
 urlpatterns += [
     path('login/', login, name='login'),
     path('me/', get_profile, name='me'),
+    path('logout/', logout, name='logout'),
 ]
 
 # urlpatterns += [

@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404
 from .models import (
     User, Artist, Album, Song, Playlist, Genre, UserActivity, 
     Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongRating, PlaylistSong
+    UserFollowing, SongRating, PlaylistSong, Favourite, Library
 )
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -13,10 +13,7 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
-from django.core.exceptions import ObjectDoesNotExist
-from .models import User
 from .serializers import UserSerializer
-from django.contrib.auth import login, logout
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
@@ -28,7 +25,7 @@ from .serializers import (
     PodcastSerializer, PodcastEpisodeSerializer, UserFollowingSerializer, 
     SongRatingSerializer, PlaylistSongSerializer,
     DetailedAlbumSerializer, DetailedPlaylistSerializer, 
-    DetailedArtistSerializer, DetailedPodcastSerializer
+    DetailedPodcastSerializer, LibrarySerializer, FavouriteSerializer
 )
 from .permissions import IsAuthenticatedOrCreateOnly
 from rest_framework import status
@@ -36,11 +33,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from django.utils import timezone
-from datetime import timedelta
-import logging
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
-logger = logging.getLogger(__name__)
 
 # from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
 # from allauth.socialaccount.providers.oauth2.client import OAuth2Client
@@ -53,22 +48,9 @@ class UserViewSet(viewsets.ModelViewSet):
     lookup_field = 'slug'
     permission_classes = [IsAuthenticatedOrCreateOnly]
 
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        headers = self.get_success_headers(serializer.data)
-        user = serializer.instance
-        # token, created = Token.objects.get_or_create(user=user)
-        return Response({
-            # 'token': token.key,
-            'user': serializer.data
-        }, status=status.HTTP_201_CREATED, headers=headers)
-    
-
     def perform_create(self, serializer):
         return serializer.save()
-    
+
     def perform_update(self, serializer):
         return serializer.save()
 
@@ -84,14 +66,28 @@ class UserViewSet(viewsets.ModelViewSet):
         return super().retrieve(request, *args, **kwargs)
 
     @action(detail=True, methods=['get'])
-    def playlists(self, request, pk=None):
+    def playlists(self, request, slug=None):
         user = self.get_object()
         playlists = Playlist.objects.filter(user=user)
         serializer = PlaylistSerializer(playlists, many=True)
         return Response(serializer.data)
+    
+    @action(detail=True, methods=['get'])
+    def favourites(self, request, slug=None):
+        user = self.get_object()
+        favourites = Favourite.objects.filter(user=user)
+        serializer = FavouriteSerializer(favourites, many=True)
+        return Response(serializer.data)
 
     @action(detail=True, methods=['get'])
-    def activity(self, request, pk=None):
+    def library(self, request, slug=None):
+        user = self.get_object()
+        items = Library.objects.filter(user=user)
+        serializer = LibrarySerializer(items, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['get'])
+    def activity(self, request, slug=None):
         user = self.get_object()
         activities = UserActivity.objects.filter(user=user)
         serializer = UserActivitySerializer(activities, many=True)
@@ -102,6 +98,48 @@ class ArtistViewSet(viewsets.ModelViewSet):
     queryset = Artist.objects.all()
     serializer_class = ArtistSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAuthenticated]
+
+
+    def create(self, request, *args, **kwargs):
+        account_id = request.data.get('account')
+        stage_name = request.data.get('stage_name')
+
+        if account_id is None or stage_name is None:
+            return super().create(request, *args, **kwargs)
+
+        if Artist.objects.filter(account__id=account_id).exists():
+            return Response({'error':'This user is already an artist. Duplicate  artist accounts are prohibited'}, status=status.HTTP_403_FORBIDDEN)
+        
+        if User.objects.filter(id=account_id).exists():
+            account = User.objects.get(id=account_id)
+            if account == request.user:
+                artist = Artist.objects.create(account=account, stage_name=stage_name)
+                user = User.objects.get(username=request.user.username)
+                user.is_artist = True
+                user.save()
+                serializer = ArtistSerializer(artist)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            else:
+              return Response({'error':'Only account owners may perfrom this action'}, status=status.HTTP_403_FORBIDDEN)  
+        else:
+            return Response({'error':'The user you are attempting to upgrade to artist status does not exist. Verify that this user exists and try again.'}, status=status.HTTP_404_NOT_FOUND)
+        
+
+    def destroy(self, request, *args, **kwargs):
+        slug = request.path.split('/')[3]
+        print(slug)
+        account = Artist.objects.get(slug=slug).account
+        if account == request.user:
+            return super().destroy(request, *args, **kwargs)
+        else:
+            return Response({'error':'You do not have permission to perform this operation'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    def perform_create(self, serializer):
+        serializer.save()
+
+    def perform_update(self, serializer):
+        return serializer.save()
 
     @action(detail=True, methods=['get'])
     def albums(self, request, slug=None):
@@ -122,6 +160,18 @@ class AlbumViewSet(viewsets.ModelViewSet):
     queryset = Album.objects.all()
     serializer_class = AlbumSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAuthenticated]
+    
+    def create(self, request, *args, **kwargs):
+        title = request.data.get('title')
+        artist_id = request.data.get('artist')
+        artist = Artist.objects.get(id=artist_id)
+        if artist is None and request.user.is_artist and request.user==artist.account:
+            album = Album.objects.create(title=title, artist=artist)
+            serializer = AlbumSerializer(album)
+            return Response(serializer.data, status=status.HTTP_201_CREATED) 
+        else:
+            return Response({'error':'Only artists can create albums'}, status=status.HTTP_403_FORBIDDEN)
 
     @action(detail=True, methods=['get'])
     def songs(self, request, slug=None):
@@ -134,12 +184,13 @@ class AlbumViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         serializer = DetailedAlbumSerializer(instance)
         return Response(serializer.data)
-
+    
 
 class SongViewSet(viewsets.ModelViewSet):
     queryset = Song.objects.all()
     serializer_class = SongSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAuthenticated]
 
     @action(detail=True, methods=['post'])
     def rate(self, request, slug=None):
@@ -159,6 +210,7 @@ class PlaylistViewSet(viewsets.ModelViewSet):
     queryset = Playlist.objects.all()
     serializer_class = PlaylistSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -183,7 +235,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
     lookup_field = 'slug'
-
+    permission_classes = [IsAuthenticated]
 
 class UserActivityViewSet(viewsets.ModelViewSet):
     queryset = UserActivity.objects.all()
@@ -216,12 +268,13 @@ class RadioViewSet(viewsets.ModelViewSet):
     queryset = Radio.objects.all()
     serializer_class = RadioSerializer
     lookup_field = 'slug'
-
+    permission_classes = [IsAuthenticated]
 
 class PodcastViewSet(viewsets.ModelViewSet):
     queryset = Podcast.objects.all()
     serializer_class = PodcastSerializer
     lookup_field = 'slug'
+    permission_classes = [IsAuthenticated]
 
     def retrieve(self, request, *args, **kwargs):
         instance = self.get_object()
@@ -233,7 +286,7 @@ class PodcastEpisodeViewSet(viewsets.ModelViewSet):
     queryset = PodcastEpisode.objects.all()
     serializer_class = PodcastEpisodeSerializer
     lookup_field = 'slug'
-
+    permission_classes = [IsAuthenticated]
 
 class UserFollowingViewSet(viewsets.ModelViewSet):
     queryset = UserFollowing.objects.all()
@@ -272,10 +325,54 @@ class SongRatingViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return SongRating.objects.filter(user=self.request.user)
-    
 
-from django.core.validators import validate_email
-from django.core.exceptions import ValidationError
+
+from django.contrib.contenttypes.models import ContentType
+
+class LibraryViewSet(viewsets.ViewSet):
+    queryset = Library.objects.all()
+    serializer_class = LibrarySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+        model_type = request.data.get('model_type')  # e.g., 'book' or 'album'
+        model_id = request.data.get('model_id')  # ID of the instance to add
+
+        # Determine the content type
+        try:
+            content_type = ContentType.objects.get(model=model_type)
+            library_entry = Library.objects.create(
+                content_type=content_type,
+                object_id=model_id
+            )
+            return Response({'message': 'Added to library', 'id': library_entry.id}, status=status.HTTP_201_CREATED)
+        except ContentType.DoesNotExist:
+            return Response({'error': 'Invalid model type'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class FavouriteViewSet(viewsets.ViewSet):
+    queryset = Favourite.objects.all()
+    serializer_class = FavouriteSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request):
+        model_type = request.data.get('model_type')  # e.g., 'book' or 'album'
+        model_id = request.data.get('model_id')  # ID of the instance to add
+
+        # Determine the content type
+        try:
+            content_type = ContentType.objects.get(model=model_type)
+            library_entry = Favourite.objects.create(
+                content_type=content_type,
+                object_id=model_id
+            )
+            return Response({'message': 'Added to Favourite', 'id': library_entry.id}, status=status.HTTP_201_CREATED)
+        except ContentType.DoesNotExist:
+            return Response({'error': 'Invalid model type'}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])
@@ -310,7 +407,7 @@ def login(request):
         return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
 
     token, _ = Token.objects.get_or_create(user=authenticated_user)
-    serializer = UserSerializer(authenticated_user)
+    # serializer = UserSerializer(authenticated_user)
 
     return Response({
         'token': token.key,
@@ -325,9 +422,21 @@ def get_profile(request):
     return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-@api_view(['DELETE'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request):
-    pass
-    # logout(request.user)
+    """
+    Log out the user by deleting their authentication token.
+    """
+    try:
+        # Get the token for the authenticated user
+        token = Token.objects.get(user=request.user)
+        # Delete the token to log out the user
+        token.delete()
+        return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)
+    except Token.DoesNotExist:
+        return Response({'error': 'Token does not exist. You may already be logged out.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        # Handle any other exceptions that may occur
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 

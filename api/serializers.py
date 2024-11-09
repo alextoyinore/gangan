@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from .models import (
     User, Artist, Album, Song, Playlist, Genre, UserActivity, 
     Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongRating, PlaylistSong
+    UserFollowing, SongRating, PlaylistSong, Library, Favourite
 )
 from rest_framework.authtoken.models import Token
 
@@ -51,10 +51,12 @@ class UserSerializer(serializers.ModelSerializer):
     
 
 class ArtistSerializer(serializers.ModelSerializer):
+    account = UserSerializer()
     class Meta:
         model = Artist
         fields = '__all__'
         read_only_fields = ['slug']
+        depth: 1
 
 
 class PlaylistSerializer(serializers.ModelSerializer):
@@ -76,6 +78,7 @@ class SongSerializer(serializers.ModelSerializer):
         model = Song
         fields = '__all__'
         read_only_fields = ['slug']
+        depth: 1
 
 
 class PlaylistSongSerializer(serializers.ModelSerializer):
@@ -139,6 +142,18 @@ class SongRatingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class FavouriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Favourite
+        fields = '__all__'
+
+
+class LibrarySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Library
+        fields = '__all__'
+
+
 # Nested serializers for more detailed views
 
 class DetailedAlbumSerializer(AlbumSerializer):
@@ -158,5 +173,4 @@ class DetailedArtistSerializer(ArtistSerializer):
 
 class DetailedPodcastSerializer(PodcastSerializer):
     episodes = PodcastEpisodeSerializer(many=True, read_only=True)
-
 

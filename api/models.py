@@ -75,6 +75,7 @@ class User(AbstractUser):
     bio = models.TextField(blank=True, null=True)
     date_of_birth = models.DateField(null=True, blank=True)
     is_premium = models.BooleanField(default=False, null=True)
+    is_artist = models.BooleanField(default=False, null=True)
 
     objects = CustomUserManager()
 
@@ -123,6 +124,61 @@ class Artist(models.Model):
         return self.stage_name
 
 
+class Album(models.Model):
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums', null=True)
+    title = models.CharField(max_length=200)
+    release_date = models.DateField(null=True, blank=True)
+    cover_image = models.ImageField(upload_to='album_covers/', null=True, blank=True)
+    genres = models.ManyToManyField('Genre', related_name='albums', blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    is_single = models.BooleanField(default=False, null=True)
+    record_label = models.CharField(max_length=200, blank=True, null=True)
+    is_published = models.BooleanField(default=False)
+    published_date = models.DateTimeField(null=True)
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Album)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.artist.stage_name} - {self.title}'
+    
+    class Meta:
+        unique_together = ('artist', 'title')
+
+
+class Song(models.Model):
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='songs')
+    album = models.ForeignKey(Album, on_delete=models.SET_NULL, null=True, blank=True, related_name='songs')
+    title = models.CharField(max_length=200)
+    duration = models.DurationField(null=True, blank=True)
+    file = models.FileField(upload_to='songs/', null=True, blank=True)
+    genres = models.ManyToManyField('Genre', related_name='songs', blank=True)
+    release_date = models.DateField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
+    slug = models.SlugField(unique=True, null=True, blank=True)
+    lyrics = models.TextField(blank=True, null=True)
+    isrc = models.CharField(max_length=12, blank=True, null=True, help_text="International Standard Recording Code")
+    bpm = models.PositiveIntegerField(null=True, blank=True, help_text="Beats Per Minute")
+    explicit = models.BooleanField(default=False, null=True)
+    waveform_data = models.JSONField(null=True, blank=True)  # Store waveform data for visualization
+    is_published = models.BooleanField(default=False)
+    published_date = models.DateTimeField(null=True)
+
+    class Meta:
+        unique_together = ('album', 'title')
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = generate_unique_slug(Song)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.artist.stage_name} - {self.title}'
+
+
 class Playlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='playlists')
     name = models.CharField(max_length=200)
@@ -142,50 +198,6 @@ class Playlist(models.Model):
     def __str__(self):
         return f'{self.user.username} - {self.name}'
 
-
-class Album(models.Model):
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums')
-    title = models.CharField(max_length=200)
-    release_date = models.DateField(null=True, blank=True)
-    cover_image = models.ImageField(upload_to='album_covers/', null=True, blank=True)
-    genres = models.ManyToManyField('Genre', related_name='albums', blank=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(unique=True, null=True, blank=True)
-    is_single = models.BooleanField(default=False, null=True)
-    record_label = models.CharField(max_length=200, blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = generate_unique_slug(Album)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.artist.stage_name} - {self.title}'
-
-
-class Song(models.Model):
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='songs')
-    album = models.ForeignKey(Album, on_delete=models.SET_NULL, null=True, blank=True, related_name='songs')
-    title = models.CharField(max_length=200)
-    duration = models.DurationField(null=True, blank=True)
-    file = models.FileField(upload_to='songs/', null=True, blank=True)
-    genres = models.ManyToManyField('Genre', related_name='songs', blank=True)
-    release_date = models.DateField(null=True, blank=True)
-    date_created = models.DateTimeField(auto_now_add=True)
-    slug = models.SlugField(unique=True, null=True, blank=True)
-    lyrics = models.TextField(blank=True, null=True)
-    isrc = models.CharField(max_length=12, blank=True, null=True, help_text="International Standard Recording Code")
-    bpm = models.PositiveIntegerField(null=True, blank=True, help_text="Beats Per Minute")
-    explicit = models.BooleanField(default=False, null=True)
-    waveform_data = models.JSONField(null=True, blank=True)  # Store waveform data for visualization
-
-    def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = generate_unique_slug(Song)
-        super().save(*args, **kwargs)
-
-    def __str__(self):
-        return f'{self.artist.stage_name} - {self.title}'
 
 
 class PlaylistSong(models.Model):
@@ -287,6 +299,7 @@ class Podcast(models.Model):
     genres = models.ManyToManyField(Genre, related_name='podcasts')
     language = models.CharField(max_length=10, choices=languages)
     is_explicit = models.BooleanField(default=False)
+    date_created = models.DateField(auto_now_add=True)
     slug = models.SlugField(unique=True, null=True)
 
     def save(self, *args, **kwargs):
@@ -342,4 +355,30 @@ class SongRating(models.Model):
     def __str__(self):
         return f'{self.user.username} rated {self.song.title}: {self.rating}'
 
+
+
+
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+
+class Favourite(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favourited_by')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f'Favourite Entry: {self.content_object} added on {self.date_added}'
+    
+
+class Library(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='added_to')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey('content_type', 'object_id')
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self) -> str:
+        return f'Favourite Entry: {self.content_object} added on {self.date_added}'
 

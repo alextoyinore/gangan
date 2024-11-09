@@ -8,3 +8,18 @@
 
  -> User Dashboard (Displays Search field at the top. Recommendations based on previously selected genres. Recommendations are in four categories - Playlist, Radio, Podcast, Previous Searches)
 
+
+
+
+
+# def create(self, request, *args, **kwargs):
+#     serializer = self.get_serializer(data=request.data)
+#     serializer.is_valid(raise_exception=True)
+#     self.perform_create(serializer)
+#     headers = self.get_success_headers(serializer.data)
+#     user = serializer.instance
+#     # token, created = Token.objects.get_or_create(user=user)
+#     return Response({
+#         # 'token': token.key,
+#         'user': serializer.data
+#     }, status=status.HTTP_201_CREATED, headers=headers)
