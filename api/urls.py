@@ -131,5 +131,3 @@ urlpatterns += [
 #     path('auth/google/', google_auth, name='google_auth'),
 # ]
 
-
-

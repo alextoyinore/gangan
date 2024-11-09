@@ -2,11 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.shortcuts import get_object_or_404
-from .models import (
-    User, Artist, Album, Song, Playlist, Genre, UserActivity, 
-    Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongRating, PlaylistSong, Favourite, Library
-)
+from .models import *
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
@@ -18,15 +14,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from .serializers import (
-    UserSerializer, ArtistSerializer, AlbumSerializer, SongSerializer, 
-    PlaylistSerializer, GenreSerializer, UserActivitySerializer, 
-    SubscriptionSerializer, UserPreferencesSerializer, RadioSerializer, 
-    PodcastSerializer, PodcastEpisodeSerializer, UserFollowingSerializer, 
-    SongRatingSerializer, PlaylistSongSerializer,
-    DetailedAlbumSerializer, DetailedPlaylistSerializer, 
-    DetailedPodcastSerializer, LibrarySerializer, FavouriteSerializer
-)
+from .serializers import *
 from .permissions import IsAuthenticatedOrCreateOnly
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -35,11 +23,6 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
-
-
-# from allauth.socialaccount.providers.google.views import GoogleOAuth2Adapter
-# from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-# from dj_rest_auth.registration.views import SocialLoginView
 
 
 class UserViewSet(viewsets.ModelViewSet):
