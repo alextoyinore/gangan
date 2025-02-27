@@ -163,7 +163,8 @@ class Song(models.Model):
     isrc = models.CharField(max_length=12, blank=True, null=True, help_text="International Standard Recording Code")
     bpm = models.PositiveIntegerField(null=True, blank=True, help_text="Beats Per Minute")
     explicit = models.BooleanField(default=False, null=True)
-    waveform_data = models.JSONField(null=True, blank=True)  # Store waveform data for visualization
+    # Store waveform data for visualization
+    waveform_data = models.JSONField(null=True, blank=True)
     is_published = models.BooleanField(default=False)
     published_date = models.DateTimeField(null=True)
 

@@ -65,7 +65,7 @@ from .views import (
     UserViewSet, ArtistViewSet, AlbumViewSet, SongViewSet, PlaylistViewSet,
     GenreViewSet, UserActivityViewSet, SubscriptionViewSet, UserPreferencesViewSet,
     RadioViewSet, PodcastViewSet, PodcastEpisodeViewSet, UserFollowingViewSet,
-    SongRatingViewSet, LibraryViewSet, FavouriteViewSet
+    SongRatingViewSet, LibraryViewSet, FavouriteViewSet, APIDocsView, UserAPIDocsView,
 )
 from .views import login, get_profile, logout
 
@@ -125,6 +125,8 @@ urlpatterns += [
     path('login/', login, name='login'),
     path('me/', get_profile, name='me'),
     path('logout/', logout, name='logout'),
+    path('docs/', APIDocsView.as_view(), name='api-docs'),
+    path('docs/user/', UserAPIDocsView.as_view(), name='user-api-docs'),
 ]
 
 # urlpatterns += [

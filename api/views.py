@@ -21,6 +21,8 @@ from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
+from django.views.generic import TemplateView
+
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -413,3 +415,9 @@ def logout(request):
         # Handle any other exceptions that may occur
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+
+class APIDocsView(TemplateView):
+    template_name = 'docs/docs.html'
+
+class UserAPIDocsView(TemplateView):
+    template_name = 'docs/user.html'

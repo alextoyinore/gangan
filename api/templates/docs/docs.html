@@ -1,0 +1,118 @@
+{% extends 'docs/base.html' %}
+
+{% block title %}API Documentation{% endblock %}
+
+{% block content %}
+    <!-- User Model -->
+    <div id="user" class="uk-card uk-card-default uk-margin">
+        <div class="uk-card-header">
+            <h2 class="uk-card-title">User Model</h2>
+        </div>
+        <div class="uk-card-body">
+            <h3>Fields</h3>
+            <table class="uk-table uk-table-striped">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>email</td>
+                        <td>EmailField</td>
+                        <td>Unique email address</td>
+                    </tr>
+                    <tr>
+                        <td>username</td>
+                        <td>CharField</td>
+                        <td>Unique username</td>
+                    </tr>
+                    <!-- Add more fields -->
+                </tbody>
+            </table>
+
+            <h3>Endpoints</h3>
+            <div class="uk-margin">
+                <div class="uk-card uk-card-small uk-card-default">
+                    <div class="uk-card-header uk-background-muted">
+                        <span class="uk-label uk-label-success">GET</span>
+                        <code class="uk-margin-left">/api/users/</code>
+                    </div>
+                    <div class="uk-card-body">
+                        <p>List all users</p>
+                        <h4>Response</h4>
+                        <pre><code>{
+    "users": [
+    {
+        "id": 1,
+        "username": "example",
+        "email": "user@example.com"
+    }
+    ]
+    }</code></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Artist Model -->
+    <div id="artist" class="uk-card uk-card-default uk-margin">
+        <div class="uk-card-header">
+            <h2 class="uk-card-title">Artist Model</h2>
+        </div>
+        <div class="uk-card-body">
+            <h3>Fields</h3>
+            <table class="uk-table uk-table-striped">
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>stage_name</td>
+                        <td>CharField</td>
+                        <td>Artist's stage name</td>
+                    </tr>
+                    <tr>
+                        <td>bio</td>
+                        <td>TextField</td>
+                        <td>Artist biography</td>
+                    </tr>
+                    <!-- Add more fields -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    pre {
+        background: #f8f8f8;
+        padding: 15px;
+        border-radius: 4px;
+    }
+    
+    .uk-label {
+        font-family: monospace;
+    }
+    
+    .uk-label-success {
+        background: #32d296;
+    }
+    
+    .uk-label-warning {
+        background: #faa05a;
+    }
+    
+    .uk-label-danger {
+        background: #f0506e;
+    }
+</style>
+{% endblock %}

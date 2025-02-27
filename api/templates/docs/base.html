@@ -1,0 +1,66 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}API Documentation{% endblock %}</title>
+    
+    <!-- UIkit CSS -->
+    <link rel="stylesheet" href="{% static 'css/uikit.min.css' %}" />
+    <link rel="stylesheet" href="{% static 'css/uikit-rtl.min.css' %}" />
+    
+    <!-- UIkit JS -->
+    <script src="{% static 'js/uikit.min.js' %}"></script>
+    <script src="{% static 'js/uikit-icons.min.js' %}"></script>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="uk-navbar-container" uk-navbar uk-sticky>
+        <div class="uk-navbar-left">
+            <ul class="uk-navbar-nav uk-padding-small">
+                <li class="uk-active"><a href="#">API Docs</a></li>
+                <li><a href="#">Models</a></li>
+                <li><a href="#">Endpoints</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Content -->
+    <div class="uk-container uk-width-1-1 uk-margin-top">
+        <div class='uk-grid-match' uk-grid>
+            <!-- Sidebar -->
+            <div class="uk-width-1-4">
+                <div class="uk-card uk-card-default uk-card-body">
+                    <ul class="uk-nav uk-nav-default">
+                        <li class="uk-nav-header">Models</li>
+                        <li><a href="{% url 'user-api-docs' %}">User</a></li>
+                        <li><a href="#artist">Artist</a></li>
+                        <li><a href="#album">Album</a></li>
+                        <li><a href="#song">Song</a></li>
+                        <li><a href="#playlist">Playlist</a></li>
+                        <li class="uk-nav-header">Authentication</li>
+                        <li><a href="#auth">Authentication</a></li>
+                        <li><a href="#tokens">Tokens</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="uk-width-3-4">
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="uk-section uk-section-muted uk-margin-top">
+        <div class="uk-container">
+            <p class="uk-text-center">© 2024 Your API Documentation</p>
+        </div>
+    </footer>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,290 @@
+{% extends 'docs/base.html' %}
+
+{% block content %}
+<!-- User Model -->
+<div id="user" class="uk-card uk-card-default uk-margin">
+    <div class="uk-card-header">
+        <h2 class="uk-card-title">User Model</h2>
+        <p class="uk-text-meta">Extends Django's AbstractUser model with additional fields for user management.</p>
+    </div>
+    <div class="uk-card-body">
+        <h3>Fields</h3>
+        <table class="uk-table uk-table-striped uk-table-responsive">
+            <thead>
+                <tr>
+                    <th>Field</th>
+                    <th>Type</th>
+                    <th>Required</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>email</td>
+                    <td>EmailField</td>
+                    <td>Yes</td>
+                    <td>Unique email address used for authentication</td>
+                </tr>
+                <tr>
+                    <td>username</td>
+                    <td>CharField</td>
+                    <td>Yes</td>
+                    <td>Unique username (alphanumeric, underscore, and hyphen only)</td>
+                </tr>
+                <tr>
+                    <td>country</td>
+                    <td>CharField</td>
+                    <td>No</td>
+                    <td>User's country of residence</td>
+                </tr>
+                <tr>
+                    <td>ethnicity</td>
+                    <td>CharField</td>
+                    <td>No</td>
+                    <td>User's ethnicity</td>
+                </tr>
+                <tr>
+                    <td>language</td>
+                    <td>CharField</td>
+                    <td>No</td>
+                    <td>Preferred language (2-letter code, defaults to 'en')</td>
+                </tr>
+                <tr>
+                    <td>slug</td>
+                    <td>SlugField</td>
+                    <td>Auto</td>
+                    <td>Unique 8-character identifier, auto-generated</td>
+                </tr>
+                <tr>
+                    <td>avatar</td>
+                    <td>ImageField</td>
+                    <td>No</td>
+                    <td>User's profile picture</td>
+                </tr>
+                <tr>
+                    <td>bio</td>
+                    <td>TextField</td>
+                    <td>No</td>
+                    <td>User's biography or description</td>
+                </tr>
+                <tr>
+                    <td>date_of_birth</td>
+                    <td>DateField</td>
+                    <td>No</td>
+                    <td>User's date of birth</td>
+                </tr>
+                <tr>
+                    <td>is_premium</td>
+                    <td>BooleanField</td>
+                    <td>No</td>
+                    <td>Premium user status flag (default: False)</td>
+                </tr>
+                <tr>
+                    <td>is_artist</td>
+                    <td>BooleanField</td>
+                    <td>No</td>
+                    <td>Artist status flag (default: False)</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>API Endpoints</h3>
+
+        <!-- ... existing user model documentation ... -->
+
+        <!-- GET All Users -->
+        <div class="uk-margin">
+            <div class="uk-card uk-card-small uk-card-default">
+                <div class="uk-card-header uk-background-muted">
+                    <span class="uk-label uk-label-success">GET</span>
+                    <code class="uk-margin-left">/api/users/</code>
+                </div>
+                <div class="uk-card-body">
+                    <p>Retrieve a list of all users</p>
+                    
+                    <h4>Query Parameters</h4>
+                    <table class="uk-table uk-table-small uk-table-divider">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>page</td>
+                                <td>integer</td>
+                                <td>Page number for pagination (default: 1)</td>
+                            </tr>
+                            <tr>
+                                <td>page_size</td>
+                                <td>integer</td>
+                                <td>Number of items per page (default: 10, max: 100)</td>
+                            </tr>
+                            <tr>
+                                <td>search</td>
+                                <td>string</td>
+                                <td>Search users by username or email</td>
+                            </tr>
+                            <tr>
+                                <td>country</td>
+                                <td>string</td>
+                                <td>Filter users by country</td>
+                            </tr>
+                            <tr>
+                                <td>is_artist</td>
+                                <td>boolean</td>
+                                <td>Filter by artist status</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Response</h4>
+                    <pre><code>{
+    "count": 125,
+    "next": "http://api.example.com/users/?page=2",
+    "previous": null,
+    "results": [
+        {
+            "slug": "abc123xy",
+            "username": "john_doe",
+            "email": "john@example.com",
+            "country": "US",
+            "is_artist": false,
+            "avatar": "http://example.com/media/user_avatars/john.jpg"
+        },
+        {
+            "slug": "xyz789ab",
+            "username": "jane_smith",
+            "email": "jane@example.com",
+            "country": "UK",
+            "is_artist": true,
+            "avatar": "http://example.com/media/user_avatars/jane.jpg"
+        }
+    ]
+}</code></pre>
+
+                    <h4>Status Codes</h4>
+                    <ul class="uk-list uk-list-bullet">
+                        <li><code>200 OK</code> - Successfully retrieved users</li>
+                        <li><code>401 Unauthorized</code> - Authentication required</li>
+                        <li><code>403 Forbidden</code> - Insufficient permissions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- GET User Details -->
+        <div class="uk-margin">
+            <div class="uk-card uk-card-small uk-card-default">
+                <div class="uk-card-header uk-background-muted">
+                    <span class="uk-label uk-label-success">GET</span>
+                    <code class="uk-margin-left">/api/users/{slug}/</code>
+                </div>
+                <div class="uk-card-body">
+                    <p>Retrieve user details</p>
+                    <h4>Response</h4>
+                    <pre><code>{
+    "slug": "abc123xy",
+    "username": "john_doe",
+    "email": "john@example.com",
+    "country": "US",
+    "language": "en",
+    "avatar": "http://example.com/media/user_avatars/john.jpg",
+    "bio": "Music enthusiast",
+    "is_premium": false,
+    "is_artist": false
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- PATCH Update User -->
+        <div class="uk-margin">
+            <div class="uk-card uk-card-small uk-card-default">
+                <div class="uk-card-header uk-background-muted">
+                    <span class="uk-label uk-label-warning">PATCH</span>
+                    <code class="uk-margin-left">/api/users/{slug}/</code>
+                </div>
+                <div class="uk-card-body">
+                    <p>Update user details</p>
+                    <h4>Request Body</h4>
+                    <pre><code>{
+    "bio": "Updated bio",
+    "country": "UK",
+    "language": "en"
+}</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <!-- DELETE User -->
+        <div class="uk-margin">
+            <div class="uk-card uk-card-small uk-card-default">
+                <div class="uk-card-header uk-background-muted">
+                    <span class="uk-label uk-label-danger">DELETE</span>
+                    <code class="uk-margin-left">/api/users/{slug}/</code>
+                </div>
+                <div class="uk-card-body">
+                    <p>Delete a user account</p>
+
+                    <div class="uk-alert-warning" uk-alert>
+                        <p>⚠️ This action cannot be undone. The user account and all associated data will be permanently deleted.</p>
+                    </div>
+
+                    <h4>Path Parameters</h4>
+                    <table class="uk-table uk-table-small uk-table-divider">
+                        <thead>
+                            <tr>
+                                <th>Parameter</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>slug</td>
+                                <td>string</td>
+                                <td>User's unique slug identifier</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                    <h4>Authentication</h4>
+                    <p>Requires one of the following:</p>
+                    <ul class="uk-list uk-list-bullet">
+                        <li>Account owner authentication</li>
+                        <li>Admin user authentication</li>
+                    </ul>
+
+                    <h4>Status Codes</h4>
+                    <ul class="uk-list uk-list-bullet">
+                        <li><code>204 No Content</code> - Successfully deleted</li>
+                        <li><code>401 Unauthorized</code> - Authentication required</li>
+                        <li><code>403 Forbidden</code> - Insufficient permissions</li>
+                        <li><code>404 Not Found</code> - User not found</li>
+                    </ul>
+
+                    <h4>Example Request</h4>
+                    <pre><code>curl -X DELETE \
+    -H "Authorization: Bearer {your_access_token}" \
+    http://api.example.com/users/abc123xy/</code></pre>
+                </div>
+            </div>
+        </div>
+
+        <h3>Notes</h3>
+        <ul class="uk-list uk-list-bullet">
+            <li>Username must contain only alphanumeric characters, underscores, or hyphens</li>
+            <li>Email is used as the primary authentication field</li>
+            <li>Slug is automatically generated and unique</li>
+            <li>Avatar images are stored in the 'user_avatars/' directory</li>
+            <li>Language codes follow ISO 639-1 standard (2-letter codes)</li>
+        </ul>
+
+        <h3>Authentication</h3>
+        <p class="uk-text-meta">This model accepts email or username for authentication.</p>
+    </div>
+</div>
+{% endblock content %}
