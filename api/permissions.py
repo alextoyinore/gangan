@@ -13,10 +13,6 @@ class IsAuthenticatedOrCreateOnly(permissions.BasePermission):
         # Allow all users to create new accounts
         if view.action == 'create':
             return True
-        # if view.action == 'list':
-        #     if request.user.is_superuser or request.user.is_staff:
-        #         return True
-        #     return False
         # For all other actions, only allow authenticated users
         return request.user and request.user.is_authenticated
     
@@ -25,7 +21,7 @@ class IsAuthenticatedOrCreateOnly(permissions.BasePermission):
         if view.action == 'destroy':
             return obj == request.user
         # For all other actions, only allow authenticated users
-        return request.user and request.user.is_authenticated
+        return (request.user and request.user.is_authenticated) or request.user.is_superuser
 
 
 class IsAuthenticatedAndOwnerOnDelete(permissions.BasePermission):

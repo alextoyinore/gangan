@@ -106,7 +106,7 @@ class User(AbstractUser):
 
 
 class Artist(models.Model):
-    account = models.OneToOneField(User, on_delete=models.CASCADE, related_name='artist_profile', null=True)
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='artist_user_profile', null=True)
     stage_name = models.CharField(max_length=200)
     bio = models.TextField(blank=True, null=True)
     genres = models.ManyToManyField('Genre', related_name='artists', blank=True)
@@ -125,11 +125,11 @@ class Artist(models.Model):
 
 
 class Album(models.Model):
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums', null=True)
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='albums', null=False)
     title = models.CharField(max_length=200)
     release_date = models.DateField(null=True, blank=True)
     cover_image = models.ImageField(upload_to='album_covers/', null=True, blank=True)
-    genres = models.ManyToManyField('Genre', related_name='albums', blank=True)
+    genres = models.ManyToManyField('Genre', related_name='albums_genres', blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(unique=True, null=True, blank=True)
     is_single = models.BooleanField(default=False, null=True)
@@ -155,7 +155,7 @@ class Song(models.Model):
     title = models.CharField(max_length=200)
     duration = models.DurationField(null=True, blank=True)
     file = models.FileField(upload_to='songs/', null=True, blank=True)
-    genres = models.ManyToManyField('Genre', related_name='songs', blank=True)
+    genres = models.ManyToManyField('Genre', related_name='song_genres', blank=True)
     release_date = models.DateField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     slug = models.SlugField(unique=True, null=True, blank=True)
@@ -182,7 +182,7 @@ class Song(models.Model):
 class Playlist(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='playlists')
     name = models.CharField(max_length=200)
-    songs = models.ManyToManyField('Song', related_name='playlists', through='PlaylistSong', blank=True)
+    songs = models.ManyToManyField('Song', related_name='playlist_songs', through='PlaylistSong', blank=True)
     is_public = models.BooleanField(default=False, null=True)
     date_created = models.DateTimeField(auto_now_add=True)
     date_updated = models.DateTimeField(auto_now=True)
@@ -330,8 +330,8 @@ class PodcastEpisode(models.Model):
 
 
 class UserFollowing(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='following')
-    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='followers')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='follower')
+    artist = models.ForeignKey(Artist, on_delete=models.CASCADE, related_name='followed_artist')
     followed_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -370,15 +370,15 @@ class Favourite(models.Model):
 
     def __str__(self) -> str:
         return f'Favourite Entry: {self.content_object} added on {self.date_added}'
-    
+
 
 class Library(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='added_to')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='library_owner')
     content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.PositiveIntegerField()
     content_object = GenericForeignKey('content_type', 'object_id')
     date_added = models.DateTimeField(auto_now_add=True)
 
     def __str__(self) -> str:
-        return f'Favourite Entry: {self.content_object} added on {self.date_added}'
+        return f'Library Entry: {self.content_object} added on {self.date_added}'
 

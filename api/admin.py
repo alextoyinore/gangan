@@ -38,8 +38,8 @@ admin.site.register(User, UserAdmin)
 
 @admin.register(Artist)
 class ArtistAdmin(admin.ModelAdmin):
-    list_display = ('stage_name', 'account', 'verified', 'date_created')
-    search_fields = ('stage_name', 'account__email')
+    list_display = ('stage_name', 'user', 'verified', 'date_created')
+    search_fields = ('stage_name', 'user__email')
     list_filter = ('verified', 'genres')
 
 @admin.register(Album)

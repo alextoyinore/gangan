@@ -83,35 +83,27 @@ class ArtistViewSet(viewsets.ModelViewSet):
 
 
     def create(self, request, *args, **kwargs):
-        account_id = request.data.get('account')
+        # user_id = request.data.get('user')
         stage_name = request.data.get('stage_name')
 
-        if account_id is None or stage_name is None:
-            return super().create(request, *args, **kwargs)
+        if stage_name is None:
+            return Response({'error':'An artist must have a stage name'}, status=status.HTTP_400_BAD_REQUEST)
 
-        if Artist.objects.filter(account__id=account_id).exists():
+        if Artist.objects.filter(user__id=request.user.id).exists():
             return Response({'error':'This user is already an artist. Duplicate  artist accounts are prohibited'}, status=status.HTTP_403_FORBIDDEN)
         
-        if User.objects.filter(id=account_id).exists():
-            account = User.objects.get(id=account_id)
-            if account == request.user:
-                artist = Artist.objects.create(account=account, stage_name=stage_name)
-                user = User.objects.get(username=request.user.username)
-                user.is_artist = True
-                user.save()
-                serializer = ArtistSerializer(artist)
-                return Response(serializer.data, status=status.HTTP_201_CREATED)
-            else:
-              return Response({'error':'Only account owners may perfrom this action'}, status=status.HTTP_403_FORBIDDEN)  
-        else:
-            return Response({'error':'The user you are attempting to upgrade to artist status does not exist. Verify that this user exists and try again.'}, status=status.HTTP_404_NOT_FOUND)
-        
+        artist = Artist.objects.create(user=request.user, stage_name=stage_name)
+        artist.user.is_artist = True
+        artist.user.save()
+        serializer = ArtistSerializer(artist)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
     def destroy(self, request, *args, **kwargs):
         slug = request.path.split('/')[3]
         print(slug)
-        account = Artist.objects.get(slug=slug).account
-        if account == request.user:
+        user = Artist.objects.get(slug=slug).user
+        if user == request.user:
             return super().destroy(request, *args, **kwargs)
         else:
             return Response({'error':'You do not have permission to perform this operation'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -147,7 +139,7 @@ class AlbumViewSet(viewsets.ModelViewSet):
         title = request.data.get('title')
         artist_id = request.data.get('artist')
         artist = Artist.objects.get(id=artist_id)
-        if artist is None and request.user.is_artist and request.user==artist.account:
+        if artist is None and request.user.is_artist and request.user==artist.user:
             album = Album.objects.create(title=title, artist=artist)
             serializer = AlbumSerializer(album)
             return Response(serializer.data, status=status.HTTP_201_CREATED) 
@@ -363,7 +355,7 @@ def login(request):
     password = request.data.get('password')
 
     if username_or_email is None or password is None:
-        return Response({'error': 'Please provide both username/email and password'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response({'error': 'Please provide either of username or email and password'}, status=status.HTTP_400_BAD_REQUEST)
 
     # Determine if the input is an email or username
     try:
