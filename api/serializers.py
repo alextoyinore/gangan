@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from .models import (
     User, Artist, Album, Song, Playlist, Genre, UserActivity, 
     Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongReview, PlaylistSong, Library, Favourite
+    UserFollowing, SongReview, PlaylistSong, Library, Favourite, RadioSong,
 )
 from rest_framework.authtoken.models import Token
 
@@ -37,6 +37,22 @@ class UserSerializer(serializers.ModelSerializer):
         # Handle many-to-many relationships
         if groups:
             user.groups.set(groups)  # Use set() to assign many-to-many relationships
+        
+        # Create playlist with new user's details
+        user_default_playlist = Playlist(
+            user=user,
+            name=f"{user.first_name} {user.last_name}'s Playlist",
+            is_public=True,
+            description='This playlist is auto-generated from songs you frequently play and songs in your Favourites'
+        )
+        user_default_playlist.save()
+        
+        # Add susbription record for new user
+        user_subscription = Subscription(
+            user=user,
+        )
+        user_subscription.save()
+        
         return user
 
     def update(self, instance, validated_data):
@@ -115,6 +131,12 @@ class UserPreferencesSerializer(serializers.ModelSerializer):
 class RadioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Radio
+        fields = '__all__'
+        
+
+class RadioSongSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = RadioSong
         fields = '__all__'
 
 

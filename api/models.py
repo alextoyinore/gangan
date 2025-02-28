@@ -225,8 +225,8 @@ class Genre(models.Model):
 
 
 class UserActivity(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activities')
-    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='user_activities')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='activity_user')
+    song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='activity_song')
     listened_at = models.DateTimeField(auto_now_add=True)
     duration_listened = models.DurationField()
     source = models.CharField(max_length=50, choices=[
@@ -249,12 +249,12 @@ class Subscription(models.Model):
         ('premium', 'Premium'),
         ('family', 'Family'),
     ]
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription')
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='subscription_user')
     subscription_type = models.CharField(max_length=10, choices=Subscription_Types, default='Free')
     start_date = models.DateTimeField(auto_now_add=True)
     end_date = models.DateTimeField(null=True, blank=True)
     is_active = models.BooleanField(default=True)
-    payment_method = models.CharField(max_length=50, blank=True)
+    payment_method = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f'{self.user.username} - {self.subscription_type}'
@@ -290,6 +290,16 @@ class Radio(models.Model):
     def __str__(self):
         return self.name
 
+
+class RadioSong(models.Model):
+    radio = models.ForeignKey(Radio, on_delete=models.CASCADE)
+    song = models.ForeignKey(Song, on_delete=models.CASCADE)
+    order = models.PositiveIntegerField()
+
+    class Meta:
+        ordering = ['order']
+        unique_together = ['radio', 'song']
+        
 
 class Podcast(models.Model):
     title = models.CharField(max_length=200)

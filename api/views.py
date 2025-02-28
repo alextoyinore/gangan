@@ -204,6 +204,13 @@ class PlaylistViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Song already in playlist'}, status=status.HTTP_400_BAD_REQUEST)
         serializer = PlaylistSongSerializer(playlist_song)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['get'])
+    def songs(self, request, slug=None):
+        playlist = self.get_object()
+        songs = PlaylistSong.objects.filter(playlist=playlist)
+        serializer = PlaylistSongSerializer(songs, many=True)
+        return Response(serializer.data)
 
 
 class GenreViewSet(viewsets.ModelViewSet):
@@ -211,6 +218,7 @@ class GenreViewSet(viewsets.ModelViewSet):
     serializer_class = GenreSerializer
     lookup_field = 'slug'
     permission_classes = [IsAuthenticated]
+
 
 class UserActivityViewSet(viewsets.ModelViewSet):
     queryset = UserActivity.objects.all()
@@ -244,6 +252,27 @@ class RadioViewSet(viewsets.ModelViewSet):
     serializer_class = RadioSerializer
     lookup_field = 'slug'
     permission_classes = [IsAuthenticated]
+    
+    @action(detail=True, methods=['post'])
+    def add_song(self, request, slug=None):
+        radio = self.get_object()
+        song_id = request.data.get('song_id')
+        if song_id is None:
+            return Response({'error': 'Song ID is required'}, status=status.HTTP_400_BAD_REQUEST)
+        song = get_object_or_404(Song, id=song_id)
+        radio_song, created = RadioSong.objects.get_or_create(radio=radio, song=song)
+        if not created:
+            return Response({'error': 'Song already in radio'}, status=status.HTTP_400_BAD_REQUEST)
+        serializer = RadioSongSerializer(radio_song)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+    
+    @action(detail=True, methods=['get'])
+    def songs(self, request, slug=None):
+        radio = self.get_object()
+        songs = RadioSong.objects.filter(radio=radio)
+        serializer = RadioSongSerializer(songs, many=True)
+        return Response(serializer.data)
+
 
 class PodcastViewSet(viewsets.ModelViewSet):
     queryset = Podcast.objects.all()
@@ -262,6 +291,7 @@ class PodcastEpisodeViewSet(viewsets.ModelViewSet):
     serializer_class = PodcastEpisodeSerializer
     lookup_field = 'slug'
     permission_classes = [IsAuthenticated]
+
 
 class UserFollowingViewSet(viewsets.ModelViewSet):
     queryset = UserFollowing.objects.all()
