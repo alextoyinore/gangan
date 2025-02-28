@@ -3,7 +3,7 @@ from django.contrib.auth.hashers import make_password
 from .models import (
     User, Artist, Album, Song, Playlist, Genre, UserActivity, 
     Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongRating, PlaylistSong, Library, Favourite
+    UserFollowing, SongReview, PlaylistSong, Library, Favourite
 )
 from rest_framework.authtoken.models import Token
 
@@ -136,9 +136,9 @@ class UserFollowingSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class SongRatingSerializer(serializers.ModelSerializer):
+class SongReviewSerializer(serializers.ModelSerializer):
     class Meta:
-        model = SongRating
+        model = SongReview
         fields = '__all__'
 
 

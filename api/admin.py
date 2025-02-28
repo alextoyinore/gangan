@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     User, Artist, Album, Song, Playlist, Genre, UserActivity, 
     Subscription, UserPreferences, Radio, Podcast, PodcastEpisode, 
-    UserFollowing, SongRating
+    UserFollowing, SongReview
 )
 
 # Register your models here.
@@ -107,8 +107,8 @@ class UserFollowingAdmin(admin.ModelAdmin):
     search_fields = ('user__username', 'artist__stage_name')
     list_filter = ('followed_at',)
 
-@admin.register(SongRating)
-class SongRatingAdmin(admin.ModelAdmin):
+@admin.register(SongReview)
+class SongReviewAdmin(admin.ModelAdmin):
     list_display = ('user', 'song', 'rating', 'created_at')
     search_fields = ('user__username', 'song__title')
     list_filter = ('rating', 'created_at')

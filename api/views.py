@@ -174,10 +174,10 @@ class SongViewSet(viewsets.ModelViewSet):
         rating = request.data.get('rating')
         if rating is None:
             return Response({'error': 'Rating is required'}, status=status.HTTP_400_BAD_REQUEST)
-        rating_obj, created = SongRating.objects.update_or_create(
+        rating_obj, created = SongReview.objects.update_or_create(
             user=user, song=song, defaults={'rating': rating}
         )
-        serializer = SongRatingSerializer(rating_obj)
+        serializer = SongReviewSerializer(rating_obj)
         return Response(serializer.data)
 
 
@@ -293,13 +293,13 @@ class UserFollowingViewSet(viewsets.ModelViewSet):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-class SongRatingViewSet(viewsets.ModelViewSet):
-    queryset = SongRating.objects.all()
-    serializer_class = SongRatingSerializer
+class SongReviewViewSet(viewsets.ModelViewSet):
+    queryset = SongReview.objects.all()
+    serializer_class = SongReviewSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
-        return SongRating.objects.filter(user=self.request.user)
+        return SongReview.objects.filter(user=self.request.user)
 
 
 from django.contrib.contenttypes.models import ContentType

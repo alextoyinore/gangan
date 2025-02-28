@@ -342,12 +342,13 @@ class UserFollowing(models.Model):
         return f'{self.user.username} follows {self.artist.stage_name}'
 
 
-class SongRating(models.Model):
+class SongReview(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     song = models.ForeignKey(Song, on_delete=models.CASCADE, related_name='ratings')
     rating = models.PositiveSmallIntegerField(null=True, blank=True, choices=[
         (1,1), (2,2), (3,3), (4,4), (5,5)
     ])
+    review = models.TextField(null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

@@ -65,7 +65,7 @@ from .views import (
     UserViewSet, ArtistViewSet, AlbumViewSet, SongViewSet, PlaylistViewSet,
     GenreViewSet, UserActivityViewSet, SubscriptionViewSet, UserPreferencesViewSet,
     RadioViewSet, PodcastViewSet, PodcastEpisodeViewSet, UserFollowingViewSet,
-    SongRatingViewSet, LibraryViewSet, FavouriteViewSet, APIDocsView, UserAPIDocsView,
+    SongReviewViewSet, LibraryViewSet, FavouriteViewSet, APIDocsView, UserAPIDocsView,
 )
 from .views import login, get_profile, logout
 
@@ -85,7 +85,7 @@ router.register(r'radios', RadioViewSet)
 router.register(r'podcasts', PodcastViewSet)
 router.register(r'podcast-episodes', PodcastEpisodeViewSet)
 router.register(r'user-following', UserFollowingViewSet)
-router.register(r'song-ratings', SongRatingViewSet)
+router.register(r'song-ratings', SongReviewViewSet)
 router.register(r'library', LibraryViewSet)
 router.register(r'favourites', FavouriteViewSet)
 
